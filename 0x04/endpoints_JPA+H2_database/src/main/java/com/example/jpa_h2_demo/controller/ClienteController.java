@@ -3,12 +3,11 @@ package com.example.jpa_h2_demo.controller;
 import com.example.jpa_h2_demo.model.Cliente;
 import com.example.jpa_h2_demo.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 public class ClienteController {
@@ -16,35 +15,49 @@ public class ClienteController {
     @Autowired
     private ClienteRepository clienteRepository;
 
+    // POST - adicionar cliente
     @PostMapping("/addClient")
     public ResponseEntity<Cliente> addClient(@RequestBody Cliente cliente) {
         Cliente saved = clienteRepository.save(cliente);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
+    // GET - listar todos
     @GetMapping("/findAllClients")
     public ResponseEntity<List<Cliente>> findAllClients() {
-        return ResponseEntity.ok(clienteRepository.findAll());
+        List<Cliente> clientes = clienteRepository.findAll();
+        return ResponseEntity.ok(clientes);
     }
 
+    // GET - buscar por ID
     @GetMapping("/findClientById/{id}")
     public ResponseEntity<Cliente> findClientById(@PathVariable("id") Long idClient) {
-        Optional<Cliente> cliente = clienteRepository.findById(idClient);
-        return cliente.map(ResponseEntity::ok)
+        return clienteRepository.findById(idClient)
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // DELETE - remover por ID
     @DeleteMapping("/removeClientById/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void removerCliente(@PathVariable("id") Long idClient) {
         clienteRepository.deleteById(idClient);
     }
 
+    // PUT - atualizar cliente
     @PutMapping("/updateClientById/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateCliente(@PathVariable("id") Long id,
                               @RequestBody Cliente cliente) {
-        cliente.setId(id);
-        clienteRepository.save(cliente);
+        Cliente existente = clienteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Cliente não encontrado"));
+
+        existente.setNome(cliente.getNome());
+        existente.setEmail(cliente.getEmail());
+        existente.setIdade(cliente.getIdade());
+        existente.setEnderecos(cliente.getEnderecos());
+        existente.setTelefones(cliente.getTelefones());
+
+        clienteRepository.save(existente);
     }
 }
